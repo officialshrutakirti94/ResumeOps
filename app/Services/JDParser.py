@@ -32,7 +32,7 @@ description: string
 requirements: list[string]
 responsibilities: list[string]
 """
-        response=self.client.models.generate_content(
+        response = self.client.models.generate_content(
             model=self.model,
             contents=prompt,
             config=types.GenerateContentConfig(
@@ -41,6 +41,8 @@ responsibilities: list[string]
                 response_schema=JobDescription
             )
         )
+        if response.parsed is None:
+            raise RuntimeError("Gemini returned no parsed job description")
         return response.parsed
         
         

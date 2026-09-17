@@ -5,6 +5,7 @@ from google import genai
 from google.genai import types
 from dotenv import load_dotenv
 import os
+import asyncio
 
 load_dotenv()
 
@@ -32,7 +33,8 @@ CANDIDATE RESUME:
 Return only JSON matching the ComparisonResult schema. For every partial match, include the resume
 evidence when available and a practical suggestion. Keep recommendations grounded in the resume and JD.
 """
-        response = self.client.models.generate_content(
+        response = await asyncio.to_thread(
+            self.client.models.generate_content,
             model=self.model,
             contents=prompt,
             config=types.GenerateContentConfig(
@@ -41,4 +43,6 @@ evidence when available and a practical suggestion. Keep recommendations grounde
                 response_schema=ComparisonResult
             )
         )
+        if response.parsed is None:
+            raise RuntimeError("Gemini returned no comparison result")
         return response.parsed

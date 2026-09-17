@@ -1,6 +1,7 @@
 from google import genai
 from google.genai import types
 import os
+import asyncio
 from dotenv import load_dotenv
 from models import LLMResponse,User,ResumeMatchingScoreRes
 load_dotenv()
@@ -28,7 +29,8 @@ async def analyze_resume_engine(content:str)->LLMResponse:
       experience_level:str
       strengths:list[str]"""
 
-  response=_client().models.generate_content(
+  response = await asyncio.to_thread(
+    _client().models.generate_content,
     model="gemini-2.5-flash",
     contents=prompt,
     config=types.GenerateContentConfig(
@@ -36,8 +38,9 @@ async def analyze_resume_engine(content:str)->LLMResponse:
       response_mime_type="application/json",
       response_schema=LLMResponse
     )
-    
   )
+  if response.parsed is None:
+    raise RuntimeError("Gemini returned no analysis result")
   return response.parsed
 
 
@@ -60,7 +63,8 @@ async def generateMatchScore(jd:str,resume_content:str)->ResumeMatchingScoreRes:
       missing_skills:list[str]
       suggestions:str"""
 
-  response=_client().models.generate_content(
+  response = await asyncio.to_thread(
+    _client().models.generate_content,
     model="gemini-2.5-flash",
     contents=prompt,
     config=types.GenerateContentConfig(
@@ -68,5 +72,7 @@ async def generateMatchScore(jd:str,resume_content:str)->ResumeMatchingScoreRes:
       response_mime_type="application/json",
       response_schema=ResumeMatchingScoreRes
     )
-  )
+    )
+  if response.parsed is None:
+    raise RuntimeError("Gemini returned no match score")
   return response.parsed

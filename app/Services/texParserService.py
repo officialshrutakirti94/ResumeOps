@@ -151,7 +151,7 @@ class TexParserService:
             while i < len(line):
                 if i < len(line) - 1 and line[i:i+2] == '\\%':
                     # Escaped percent sign
-                    result += '\%'
+                    result += '\\%'
                     i += 2
                 elif line[i] == '%':
                     # Comment starts here
@@ -379,7 +379,7 @@ class TexParserService:
         return node, i
 
     def _parse_environment(self, tokens: list, start_idx: int) -> tuple:
-        """Parse a \begin{env} ... \end{env} environment, tracking positions"""
+        """Parse a LaTeX environment, tracking source positions."""
         begin_token = tokens[start_idx]
         start_pos = begin_token.position
         i = start_idx + 1

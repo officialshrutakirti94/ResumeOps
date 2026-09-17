@@ -1,3 +1,4 @@
+import asyncio
 import os
 
 from dotenv import load_dotenv
@@ -35,7 +36,7 @@ app.add_middleware(
 )
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def health_check():
     return {"message": "API is running"}
 
@@ -49,18 +50,26 @@ async def match_resume_with_jd(
     file: UploadFile = File(...),
     jd: str = Form(...),
 ):
-    parsed_resume = await parse_resume_file(file)
-    parsed_jd = JDParser().parse(jd)
-    comparer = CompareAnalysisService()
-    return await comparer.compare_resume_with_jd(
-        jd=parsed_jd,
-        resume_content=parsed_resume,
-    )
+    try:
+        parsed_resume = await parse_resume_file(file)
+        parsed_jd = await asyncio.to_thread(JDParser().parse, jd)
+        comparer = CompareAnalysisService()
+        return await comparer.compare_resume_with_jd(
+            jd=parsed_jd,
+            resume_content=parsed_resume,
+        )
+    except HTTPException:
+        raise
+    except Exception as error:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Resume matching service failed: {error}",
+        ) from error
 
 @app.post("/resume/parseJD", response_model=JobDescription)
 async def parse_job_description(request: JobDescriptionInput):
     parser = JDParser()
-    return parser.parse(request.text)
+    return await asyncio.to_thread(parser.parse, request.text)
 
 
 @app.post("/resume/upload", response_model=ParsedResume)

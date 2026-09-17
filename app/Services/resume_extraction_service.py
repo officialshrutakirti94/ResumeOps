@@ -14,6 +14,7 @@ This reduces token usage and API costs significantly.
 
 import json
 import os
+import asyncio
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
@@ -108,20 +109,23 @@ Extract and return ONLY valid JSON matching the schema above.
 """
 
         try:
-            response = self.client.models.generate_content(
-                model=self.model,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    temperature=0.1,  # Low temperature for deterministic extraction
-                    response_mime_type="application/json",
-                    response_schema=Resume,
-                ),
+            response = await asyncio.to_thread(
+              self.client.models.generate_content,
+              model=self.model,
+              contents=prompt,
+              config=types.GenerateContentConfig(
+                temperature=0.1,
+                response_mime_type="application/json",
+                response_schema=Resume,
+              ),
             )
 
             # Parse the response
             parsed_resume = response.parsed
 
             # Validate and return
+            if parsed_resume is None:
+              raise RuntimeError("Gemini returned no parsed resume")
             return parsed_resume
 
         except Exception as e:
