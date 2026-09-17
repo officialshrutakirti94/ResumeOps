@@ -37,6 +37,7 @@ class ParsedResume(BaseModel):
     Wraps the original LaTeX and the extracted Resume model.
     Preserves raw_tex for later editing operations.
     """
+    source_mappings: list[dict]
     raw_tex: str
     normalized_content: str
     resume: Resume

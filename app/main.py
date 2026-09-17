@@ -1,4 +1,8 @@
-from fastapi import FastAPI, File, Form, UploadFile, HTTPException
+import os
+
+from dotenv import load_dotenv
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from models import User, LLMResponse, ResumeMatchingScoreReq, ResumeMatchingScoreRes
 from models.resume import ParsedResume
 from models.JobDescription import (
@@ -12,12 +16,33 @@ from Services.latex_cleaning_service import LaTeXCleaningService
 from Services.resume_extraction_service import ResumeExtractionService
 from Services.JDParser import JDParser
 from Services.compareAnalysisService import CompareAnalysisService
-app = FastAPI()
+
+load_dotenv()
+
+app = FastAPI(title="Resume Analyzer API", version="1.0.0")
+
+cors_origins = [
+    origin.strip()
+    for origin in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+    if origin.strip()
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
 def health_check():
     return {"message": "API is running"}
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 @app.post("/resume/matchJD", response_model=ComparisonResult)
 async def match_resume_with_jd(
@@ -82,6 +107,7 @@ async def parse_resume_file(file: UploadFile) -> ParsedResume:
     
     # Return complete parsed resume with all metadata for agent editing
     return ParsedResume(
+        source_mappings=parsed_data["source_mappings"],
         raw_tex=parsed_data["raw_tex"],
         normalized_content=final_cleaned_text,  # Cleaned content for reference
         resume=resume

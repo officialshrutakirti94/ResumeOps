@@ -115,6 +115,8 @@ class TexParserService:
         
         # Step 4: Generate cleaned content (for LLM processing)
         cleaned_text = self._generate_cleaned_content(self.document_tree)
+
+        self.source_mappings = self._build_source_mappings(self.document_tree)
         
         return {
             "raw_tex": self.raw_tex,
@@ -153,6 +155,7 @@ class TexParserService:
                     i += 2
                 elif line[i] == '%':
                     # Comment starts here
+                    result += ' ' * (len(line) - i)
                     break
                 else:
                     result += line[i]
@@ -161,6 +164,34 @@ class TexParserService:
             cleaned_lines.append(result)
         
         return '\n'.join(cleaned_lines)
+
+    def _build_source_mappings(self, nodes: list) -> list:
+        """Build editable source mappings for every parsed node."""
+        mappings = []
+
+        def visit(node: LaTeXNode, parent_section: str = "") -> None:
+            section = node.name or parent_section or node.node_type
+            mappings.append(SourceMapping(
+                section=section,
+                subsection=parent_section if parent_section and parent_section != section else "",
+                content=self._node_content_text(node),
+                start_pos=node.start_pos,
+                end_pos=node.end_pos,
+                raw_tex_snippet=self.raw_tex[node.start_pos:node.end_pos],
+            ))
+            for child in node.content:
+                if isinstance(child, LaTeXNode):
+                    visit(child, section)
+
+        for node in nodes:
+            visit(node)
+        return mappings
+
+    def _node_content_text(self, node: LaTeXNode) -> str:
+        """Return readable text represented by a parsed node."""
+        if node.node_type in ["text", "command"]:
+            return " ".join(str(value) for value in node.content).strip()
+        return self._generate_cleaned_content(node.content)
 
     def _tokenize(self, tex_content: str) -> list:
         """
@@ -311,7 +342,7 @@ class TexParserService:
         
         # Collect required arguments {...}
         required_args = []
-        arg_end_pos = start_pos
+        arg_end_pos = start_pos + len(cmd_token.raw)
         while i < len(tokens) and tokens[i].type == TokenType.BRACE_OPEN:
             i += 1
             arg_content = []
@@ -322,7 +353,7 @@ class TexParserService:
                 elif tokens[i].type == TokenType.BRACE_CLOSE:
                     depth -= 1
                     if depth == 0:
-                        arg_end_pos = tokens[i].position
+                        arg_end_pos = tokens[i].position + len(tokens[i].raw)
                         break
                 arg_content.append(tokens[i])
                 i += 1
@@ -385,7 +416,8 @@ class TexParserService:
                     
                     if end_name == env_name:
                         # Found matching \end
-                        end_pos = tokens[end_check_idx].position if end_check_idx < len(tokens) else i
+                        end_pos = (tokens[end_check_idx].position + len(tokens[end_check_idx].raw)
+                                   if end_check_idx < len(tokens) else i)
                         i = end_check_idx + 1  # Skip past }
                         break
             

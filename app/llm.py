@@ -4,9 +4,13 @@ import os
 from dotenv import load_dotenv
 from models import LLMResponse,User,ResumeMatchingScoreRes
 load_dotenv()
-client = genai.Client(
-  api_key=os.getenv("GEMINI_API_KEY"),
-)
+
+
+def _client() -> genai.Client:
+  api_key = os.getenv("GEMINI_API_KEY")
+  if not api_key:
+    raise RuntimeError("GEMINI_API_KEY is not configured")
+  return genai.Client(api_key=api_key)
 
 async def analyze_resume_engine(content:str)->LLMResponse:
   prompt=f"""You are an expert technical recruiter.
@@ -24,7 +28,7 @@ async def analyze_resume_engine(content:str)->LLMResponse:
       experience_level:str
       strengths:list[str]"""
 
-  response=client.models.generate_content(
+  response=_client().models.generate_content(
     model="gemini-2.5-flash",
     contents=prompt,
     config=types.GenerateContentConfig(
@@ -56,7 +60,7 @@ async def generateMatchScore(jd:str,resume_content:str)->ResumeMatchingScoreRes:
       missing_skills:list[str]
       suggestions:str"""
 
-  response=client.models.generate_content(
+  response=_client().models.generate_content(
     model="gemini-2.5-flash",
     contents=prompt,
     config=types.GenerateContentConfig(
