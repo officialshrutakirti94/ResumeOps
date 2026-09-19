@@ -59,6 +59,12 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.PAYMENT_REQUIRED, exception.getMessage(), request);
     }
 
+    @ExceptionHandler(AnalysisServiceUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleAnalysisServiceUnavailable(
+            AnalysisServiceUnavailableException exception, HttpServletRequest request) {
+        return error(HttpStatus.BAD_GATEWAY, exception.getMessage(), request);
+    }
+
     @ExceptionHandler({NoAnalysisException.class, NoResumeException.class})
     public ResponseEntity<ErrorResponse> handleEmptyResource(
             Exception exception, HttpServletRequest request) {

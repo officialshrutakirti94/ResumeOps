@@ -9,6 +9,7 @@ import com.shrutakirti.resumeops.entity.UserEntity;
 import com.shrutakirti.resumeops.exception.InsufficientCreditsException;
 import com.shrutakirti.resumeops.exception.NoAnalysisException;
 import com.shrutakirti.resumeops.exception.AccessDeniesException;
+import com.shrutakirti.resumeops.exception.AnalysisServiceUnavailableException;
 import com.shrutakirti.resumeops.repository.ResumeAnalysisRepo;
 import com.shrutakirti.resumeops.repository.ResumeRepo;
 import com.shrutakirti.resumeops.repository.UserRepo;
@@ -27,6 +28,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -118,22 +120,30 @@ public class ResumeCompatibilityService {
         MultipartBodyBuilder builder=new MultipartBodyBuilder();
         builder.part("file",filebytes).filename(fileName).contentType(MediaType.APPLICATION_OCTET_STREAM);
         builder.part("jd", jobDescription);
-        return fastApiClient.post().uri("/resume/matchJD")
+        try {
+            return fastApiClient.post().uri("/resume/matchJD")
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters.fromMultipartData(builder.build()))
                 .retrieve()
                 .onStatus(
-                        HttpStatusCode::isError,
-                        response -> response.bodyToMono(String.class)
-                                .flatMap(errorBody -> {
-                                    System.out.println("FASTAPI ERROR: " + errorBody);
-                                    return Mono.error(
-                                            new RuntimeException(errorBody)
-                                    );
-                                })
+                    HttpStatusCode::isError,
+                    response -> response.bodyToMono(String.class)
+                        .flatMap(errorBody -> Mono.error(
+                            new AnalysisServiceUnavailableException(
+                                "Resume analysis service returned an error: " + errorBody,
+                                null)
+                        ))
                 )
                 .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                .block();
+                .block(Duration.ofSeconds(90));
+        } catch (AnalysisServiceUnavailableException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new AnalysisServiceUnavailableException(
+                "Resume analysis service is unavailable. Check FASTAPI_BASE_URL.",
+                exception
+            );
+        }
     }
 
 
