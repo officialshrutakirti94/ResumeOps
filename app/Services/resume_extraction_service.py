@@ -14,9 +14,7 @@ This reduces token usage and API costs significantly.
 
 import json
 import os
-import asyncio
-from google import genai
-from google.genai import types
+from groq import AsyncGroq
 from dotenv import load_dotenv
 from models.resume import Resume, Experience, Project, Education
 
@@ -44,8 +42,8 @@ class ResumeExtractionService:
     """
 
     def __init__(self):
-        self.client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-        self.model = "gemini-2.5-flash"
+        self.client = AsyncGroq(api_key=os.getenv("GROQ_API_KEY"))
+        self.model = "openai/gpt-oss-120b"
 
     async def extract_resume(self, cleaned_text: str, raw_tex: str) -> Resume:
         """
@@ -109,24 +107,20 @@ Extract and return ONLY valid JSON matching the schema above.
 """
 
         try:
-            response = await asyncio.to_thread(
-              self.client.models.generate_content,
+            response = await self.client.chat.completions.create(
               model=self.model,
-              contents=prompt,
-              config=types.GenerateContentConfig(
-                temperature=0.1,
-                response_mime_type="application/json",
-                response_schema=Resume,
-              ),
+              messages=[
+                {"role": "system", "content": "You are a helpful resume extraction assistant."},
+                {"role": "user", "content": prompt},
+              ],
+              response_format={"type": "json_object"},
+              temperature=0.1,
             )
 
-            # Parse the response
-            parsed_resume = response.parsed
-
-            # Validate and return
-            if parsed_resume is None:
-              raise RuntimeError("Gemini returned no parsed resume")
-            return parsed_resume
+            raw = response.choices[0].message.content
+            if not raw:
+              raise RuntimeError("Groq returned no parsed resume")
+            return Resume.model_validate_json(raw)
 
         except Exception as e:
             print(f"Error during LLM extraction: {e}")

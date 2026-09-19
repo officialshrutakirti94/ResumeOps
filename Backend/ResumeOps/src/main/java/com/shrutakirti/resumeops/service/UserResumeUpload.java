@@ -24,7 +24,7 @@ public class UserResumeUpload {
     @Autowired
     ResumeRepo repo;
 
-    public ResumeMetaData upload(MultipartFile file) throws IOException {
+    public ResumeMetaData upload(MultipartFile file,String resume_name) throws IOException {
         Object principal= SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String email;
         if (principal instanceof UserDetails) {
@@ -44,9 +44,10 @@ public class UserResumeUpload {
         metaData.setUrl(url);
         metaData.setFile_name(file_name);
         metaData.setCreated_at(LocalTime.now().toString());
-        repo.save(metaData);
-
-        return metaData;
+        metaData.setResume_name(resume_name);
+        ResumeMetaData data=repo.save(metaData);
+        System.out.println("Generated Resume ID: " + data.getResume_id());
+        return data;
 
     }
 }

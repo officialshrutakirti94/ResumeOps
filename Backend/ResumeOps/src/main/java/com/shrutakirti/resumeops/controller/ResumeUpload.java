@@ -23,17 +23,19 @@ public class ResumeUpload {
     @Autowired
     UserResumeUpload resumeService;
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ResumeUploadResponse> uploadResume(@RequestParam("resume") MultipartFile file, Authentication authentication) throws IOException {
+    public ResponseEntity<ResumeUploadResponse> uploadResume(@RequestParam("resume") MultipartFile file, Authentication authentication,@RequestParam("resume_name") String resumeName) throws IOException {
 
         System.out.println("=========Resume Upload===========");
         System.out.println(authentication.getName());
         ResumeUploadResponse res=new ResumeUploadResponse();
-        ResumeMetaData resume= resumeService.upload(file);
+        ResumeMetaData resume= resumeService.upload(file,resumeName);
 
         res.setFile_name(resume.getFile_name());
         res.setUrl(resume.getUrl());
         res.setUser_name(resume.getUserName());
         res.setCreated_at(resume.getCreated_at());
+        res.setResume_id(resume.getResume_id());
+        res.setResume_name(resume.getResume_name());
 
         return ResponseEntity.ok(res);
 

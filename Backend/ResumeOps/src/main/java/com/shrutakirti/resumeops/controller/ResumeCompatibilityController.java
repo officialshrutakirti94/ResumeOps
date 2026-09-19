@@ -17,8 +17,9 @@ public class ResumeCompatibilityController {
 
 
     @PostMapping("/compatibilityCheck")
-    public ResumeCompatibilityMetaData compatibilityCheck(String JD) throws IOException, InsufficientCreditsException {
+    public ResumeCompatibilityMetaData compatibilityCheck(Integer resumeID,String JD) throws IOException, InsufficientCreditsException {
         return compatibilityService.analyze(
+                resumeID,
                 JD
         );
     }

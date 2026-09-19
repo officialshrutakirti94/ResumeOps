@@ -1,17 +1,16 @@
+import json
 from models.JobDescription import JobDescription
-from google import genai
-from google.genai import types
+from groq import Groq
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
 
 
-
 class JDParser:
     def __init__(self):
-            self.client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-            self.model = "gemini-2.5-flash"
+            self.client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+            self.model = "openai/gpt-oss-120b"
     def parse(self,jd:str)->JobDescription:
         self.jd = jd
         prompt=f"""You are an expert technical recruiter.
@@ -32,17 +31,18 @@ description: string
 requirements: list[string]
 responsibilities: list[string]
 """
-        response = self.client.models.generate_content(
+        response = self.client.chat.completions.create(
             model=self.model,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                temperature=0.1,
-                response_mime_type="application/json",
-                response_schema=JobDescription
-            )
+            messages=[
+                {"role": "system", "content": "You are an expert technical recruiter."},
+                {"role": "user", "content": prompt},
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.1,
         )
-        if response.parsed is None:
-            raise RuntimeError("Gemini returned no parsed job description")
-        return response.parsed
+        raw = response.choices[0].message.content
+        if not raw:
+            raise RuntimeError("Groq returned no parsed job description")
+        return JobDescription.model_validate_json(raw)
         
         

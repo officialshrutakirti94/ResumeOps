@@ -8,9 +8,10 @@ import lombok.Setter;
 @Setter
 public class ResumeUploadResponse {
     private String user_name;
-    private int resume_id;
+    private Integer resume_id;
     private String file_name;
     private  String url;
     private String created_at;
+    private  String resume_name;
 
 }
