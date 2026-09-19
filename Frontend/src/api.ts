@@ -1,7 +1,6 @@
 import type { AnalysisResult } from '@/data/types';
 
-// Vite proxies these paths to the backend during local development.
-const API_BASE_URL = '';
+const API_BASE_URL = 'https://backendservice-wpxk.onrender.com';
 
 export interface ApiUser {
   id: number;

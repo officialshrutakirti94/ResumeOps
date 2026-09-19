@@ -12,13 +12,13 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api': 'http://127.0.0.1:8080',
-      '/resume': 'http://127.0.0.1:8080',
-      '/compatibilityCheck': 'http://127.0.0.1:8080',
-      '/getresumes': 'http://127.0.0.1:8080',
-      '/getAnalysisHistory': 'http://127.0.0.1:8080',
-      '/analysisDelete': 'http://127.0.0.1:8080',
-      '/resumeDelete': 'http://127.0.0.1:8080',
+      '/api': 'https://backendservice-wpxk.onrender.com',
+      '/resume': 'https://backendservice-wpxk.onrender.com',
+      '/compatibilityCheck': 'https://backendservice-wpxk.onrender.com',
+      '/getresumes': 'https://backendservice-wpxk.onrender.com',
+      '/getAnalysisHistory': 'https://backendservice-wpxk.onrender.com',
+      '/analysisDelete': 'https://backendservice-wpxk.onrender.com',
+      '/resumeDelete': 'https://backendservice-wpxk.onrender.com',
     },
   },
   optimizeDeps: {
