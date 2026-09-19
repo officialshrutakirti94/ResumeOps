@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { getProfile, loginRequest, registerRequest, type ApiUser } from '@/api';
+import { getProfile, loginRequest, registerRequest, type ApiErrorDetails, type ApiUser } from '@/api';
 
 export interface User {
   id: number;
@@ -13,6 +13,7 @@ export interface AppNotification {
   id: number;
   message: string;
   tone: 'success' | 'warning' | 'error';
+  status?: number;
 }
 
 interface AuthContextValue {
@@ -67,6 +68,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setNotifications((current) => current.filter((item) => item.id !== id));
     }, 4500);
   };
+
+  useEffect(() => {
+    const handleApiError = (event: Event) => {
+      const details = (event as CustomEvent<ApiErrorDetails>).detail;
+      const statusMessages: Record<number, string> = {
+        400: 'Please check the submitted information.',
+        401: 'Incorrect password or unauthenticated request.',
+        402: 'You do not have enough credits to complete this request.',
+        403: 'You do not have access to this resource.',
+        404: 'The requested user, resume, or analysis was not found.',
+        409: 'This conflicts with existing data.',
+        500: 'An unexpected server error occurred.',
+      };
+      const message = details?.message || statusMessages[details?.status ?? 0] || 'Something went wrong. Please try again.';
+      const tone = details?.status === 400 || details?.status === 402 || details?.status === 409 ? 'warning' : 'error';
+      notify(message, tone);
+    };
+
+    window.addEventListener('resumeops-api-error', handleApiError);
+    return () => window.removeEventListener('resumeops-api-error', handleApiError);
+  }, []);
 
   const dismissNotification = (id: number) => {
     setNotifications((current) => current.filter((item) => item.id !== id));

@@ -38,6 +38,7 @@ public class FetchAnalysisService {
         List<FetchAnalysisRes> response = new ArrayList<>();
         for(ResumeCompatibilityMetaData resumeAnalysis:data){
             FetchAnalysisRes res=new FetchAnalysisRes();
+            res.setAnalysis_id(resumeAnalysis.getAnalysis_id());
             res.setAnalysis(resumeAnalysis.getAnalysis());
             res.setVersion(resumeAnalysis.getVersion());
             res.setUserName(resumeAnalysis.getUserName());

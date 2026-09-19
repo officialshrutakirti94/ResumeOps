@@ -2,6 +2,7 @@ import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Zap } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface PricingProps {
   onNavigate: (page: 'landing' | 'login' | 'register' | 'dashboard') => void;
@@ -35,6 +36,17 @@ const plans = [
 ];
 
 export function Pricing({ onNavigate }: PricingProps) {
+  const { notify } = useAuth();
+
+  const handlePlanClick = (planName: string) => {
+    if (planName === 'Pro') {
+      notify('Upgrade to Pro is coming soon. Payments are currently in test mode.', 'warning');
+      return;
+    }
+
+    onNavigate('register');
+  };
+
   return (
     <section id="pricing" className="relative mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-2xl text-center">
@@ -81,7 +93,7 @@ export function Pricing({ onNavigate }: PricingProps) {
             <Button
               variant={plan.highlighted ? 'primary' : 'outline'}
               className="mt-8 w-full"
-              onClick={() => onNavigate('register')}
+              onClick={() => handlePlanClick(plan.name)}
             >
               {plan.cta}
             </Button>

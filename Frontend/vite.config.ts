@@ -17,6 +17,8 @@ export default defineConfig({
       '/compatibilityCheck': 'http://127.0.0.1:8080',
       '/getresumes': 'http://127.0.0.1:8080',
       '/getAnalysisHistory': 'http://127.0.0.1:8080',
+      '/analysisDelete': 'http://127.0.0.1:8080',
+      '/resumeDelete': 'http://127.0.0.1:8080',
     },
   },
   optimizeDeps: {

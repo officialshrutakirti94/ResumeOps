@@ -3,11 +3,14 @@ package com.shrutakirti.resumeops.service;
 import com.shrutakirti.resumeops.dto.UserLoginRequest;
 import com.shrutakirti.resumeops.dto.UserLoginResponse;
 import com.shrutakirti.resumeops.entity.UserEntity;
+import com.shrutakirti.resumeops.exception.PasswordMismatchException;
+import com.shrutakirti.resumeops.exception.UserNotFoundException;
 import com.shrutakirti.resumeops.repository.UserRepo;
 import com.shrutakirti.resumeops.security.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -25,9 +28,18 @@ public class UserLoginService {
     private JwtUtil jwtUtil;
 
     public UserLoginResponse loginService(UserLoginRequest loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
-        );
+        if (!userRepo.existsByEmail(loginRequest.getEmail())) {
+            throw new UserNotFoundException("No user exists with email: " + loginRequest.getEmail());
+        }
+
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
+            );
+        } catch (BadCredentialsException exception) {
+            throw new PasswordMismatchException("Password is incorrect");
+        }
 
         if (authentication.isAuthenticated()) {
             UserEntity user = userRepo.findByEmail(loginRequest.getEmail())
@@ -44,7 +56,7 @@ public class UserLoginService {
                     user.getCredits()
             );
         } else {
-            throw new RuntimeException("Authentication failed");
+            throw new PasswordMismatchException("Password is incorrect");
         }
     }
 }

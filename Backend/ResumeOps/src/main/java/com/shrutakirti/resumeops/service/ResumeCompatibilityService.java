@@ -8,6 +8,7 @@ import com.shrutakirti.resumeops.entity.ResumeMetaData;
 import com.shrutakirti.resumeops.entity.UserEntity;
 import com.shrutakirti.resumeops.exception.InsufficientCreditsException;
 import com.shrutakirti.resumeops.exception.NoAnalysisException;
+import com.shrutakirti.resumeops.exception.AccessDeniesException;
 import com.shrutakirti.resumeops.repository.ResumeAnalysisRepo;
 import com.shrutakirti.resumeops.repository.ResumeRepo;
 import com.shrutakirti.resumeops.repository.UserRepo;
@@ -72,7 +73,7 @@ public class ResumeCompatibilityService {
                 ));
         UserEntity user=repo.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
         if (!resume.getUserName().equals(email)) {
-            throw new RuntimeException("You are not allowed to access this resume");
+            throw new AccessDeniesException("You are not allowed to access this resume");
         }
 
         if(user.getCredits()<=0){
@@ -104,7 +105,7 @@ public class ResumeCompatibilityService {
     }
 
     public String getVersion(Integer resume_id){
-        Optional<ResumeCompatibilityMetaData> data_version=analysisRepo.findLatestByResumeId(resume_id);
+        Optional<ResumeCompatibilityMetaData> data_version=analysisRepo.findFirstByResume_idOrderByAnalysis_idDesc(resume_id);
         if(data_version.isEmpty()){
             return "v1";
         }

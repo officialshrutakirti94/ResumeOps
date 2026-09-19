@@ -1,4 +1,28 @@
+import { useEffect, useState } from 'react';
+import { BriefcaseBusiness, CheckCircle2, FileSearch, Sparkles } from 'lucide-react';
+
+const analysisStages = [
+  { label: 'Preparing your analysis', icon: Sparkles },
+  { label: 'Parsing your resume', icon: FileSearch },
+  { label: 'Reading the job description', icon: BriefcaseBusiness },
+  { label: 'Comparing skills and requirements', icon: Sparkles },
+  { label: 'Putting the final insights together', icon: CheckCircle2 },
+];
+
 export function AnalyzingPhase() {
+  const [stageIndex, setStageIndex] = useState(0);
+
+  useEffect(() => {
+    const stageTimer = window.setInterval(() => {
+      setStageIndex((current) => (current + 1) % analysisStages.length);
+    }, 2600);
+
+    return () => window.clearInterval(stageTimer);
+  }, []);
+
+  const currentStage = analysisStages[stageIndex];
+  const StageIcon = currentStage.icon;
+
   return (
     <div className="animate-fade-in mx-auto flex max-w-md flex-col items-center text-center">
       {/* Minimal animated orb */}
@@ -29,6 +53,26 @@ export function AnalyzingPhase() {
       <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
         Comparing your resume against the job description
       </p>
+
+      <div
+        key={currentStage.label}
+        aria-live="polite"
+        className="mt-7 flex min-h-11 items-center gap-3 rounded-xl border border-brand-100 bg-brand-50/70 px-4 py-2.5 text-left shadow-sm animate-fade-in-up dark:border-brand-900/50 dark:bg-brand-900/20"
+      >
+        <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-white text-brand-600 shadow-sm dark:bg-gray-900 dark:text-brand-400">
+          <StageIcon className="h-4 w-4 animate-pulse" />
+        </span>
+        <span className="text-sm font-medium text-brand-800 dark:text-brand-200">{currentStage.label}...</span>
+        <span className="ml-auto flex gap-1" aria-hidden="true">
+          {[0, 1, 2].map((dot) => (
+            <span
+              key={dot}
+              className="h-1.5 w-1.5 rounded-full bg-brand-400"
+              style={{ animation: 'dotPulse 1.2s ease-in-out infinite', animationDelay: `${dot * 0.18}s` }}
+            />
+          ))}
+        </span>
+      </div>
 
       {/* Minimal progress dots */}
       <div className="mt-10 flex items-center gap-2">

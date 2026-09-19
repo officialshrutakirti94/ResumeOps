@@ -6,6 +6,7 @@ interface JobDescriptionPhaseProps {
   onJobDescriptionChange: (text: string) => void;
   onAnalyze: () => void;
   onResumeUploaded: boolean;
+  onBackToResume: () => void;
 }
 
 export function JobDescriptionPhase({
@@ -13,6 +14,7 @@ export function JobDescriptionPhase({
   onJobDescriptionChange,
   onAnalyze,
   onResumeUploaded,
+  onBackToResume,
 }: JobDescriptionPhaseProps) {
   return (
     <div className="animate-fade-in-up mx-auto max-w-3xl">
@@ -64,6 +66,9 @@ We are looking for a Senior Backend Engineer with:
               : 'Please paste a job description to continue'}
           </p>
         )}
+        <Button variant="ghost" onClick={onBackToResume}>
+          Back to Resume & History
+        </Button>
       </div>
     </div>
   );

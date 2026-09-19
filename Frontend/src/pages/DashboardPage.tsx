@@ -13,6 +13,8 @@ import {
   getAnalysisHistory,
   getResumes,
   uploadResume,
+  deleteAnalysis,
+  deleteResume,
   type AnalysisHistoryItem,
   type ResumeSummary,
 } from '@/api';
@@ -92,6 +94,27 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
     }
   };
 
+  const handleResumeDeleted = async (resume: ResumeSummary) => {
+    await deleteResume(resume.resume_id);
+    const [latestResumes, latestHistory] = await Promise.all([getResumes(), getAnalysisHistory()]);
+    setResumes(latestResumes);
+    setHistory(latestHistory);
+    if (selectedResume?.resume_id === resume.resume_id) {
+      setSelectedResume(null);
+      setResumeFilename('');
+      setCurrentStep(0);
+    }
+    notify('Resume deleted successfully.');
+  };
+
+  const handleAnalysisDeleted = async (item: AnalysisHistoryItem) => {
+    const analysisId = item.analysis_id ?? item.id;
+    if (analysisId === undefined) return;
+    await deleteAnalysis(analysisId);
+    setHistory(await getAnalysisHistory());
+    notify('Analysis deleted successfully.');
+  };
+
   const handleRestart = () => {
     setCurrentStep(0);
     setSelectedResume(null);
@@ -110,7 +133,11 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
         <Card className="mb-8 p-4">
           <PipelineStepper
             currentStep={currentStep}
-            onStepClick={() => {}}
+            onStepClick={(step) => {
+              if (step === 0 && currentStep > 0) setCurrentStep(0);
+              if (step === 1 && currentStep >= 1) setCurrentStep(1);
+              if (step === 3 && analysisResult) setCurrentStep(3);
+            }}
           />
         </Card>
 
@@ -126,6 +153,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
                   setCurrentStep(1);
                   setError('');
                 }}
+                onResumeDeleted={handleResumeDeleted}
                 onResumeRemoved={() => {
                   setSelectedResume(null);
                   setResumeFilename('');
@@ -133,7 +161,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
                 resumes={resumes}
                 uploadedFilename={resumeFilename}
               />
-              <AnalysisHistoryPanel history={history} onSelect={openHistoryItem} />
+              <AnalysisHistoryPanel history={history} onSelect={openHistoryItem} onDelete={handleAnalysisDeleted} />
             </div>
           )}
 
@@ -143,6 +171,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
               onJobDescriptionChange={setJobDescription}
               onAnalyze={handleAnalyze}
               onResumeUploaded={!!selectedResume}
+              onBackToResume={() => setCurrentStep(0)}
             />
           )}
 
@@ -155,6 +184,8 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
           {currentStep === 3 && analysisResult && (
             <ResultsPhase
               result={analysisResult}
+              onBackToJobDescription={() => setCurrentStep(1)}
+              onBackToResume={() => setCurrentStep(0)}
               onRestart={handleRestart}
             />
           )}

@@ -2,6 +2,7 @@ package com.shrutakirti.resumeops.service;
 
 import com.shrutakirti.resumeops.dto.ResumeUploadResponse;
 import com.shrutakirti.resumeops.entity.ResumeMetaData;
+import com.shrutakirti.resumeops.exception.DuplicateResumeNameException;
 import com.shrutakirti.resumeops.repository.ResumeRepo;
 import com.shrutakirti.resumeops.repository.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,10 @@ public class UserResumeUpload {
             email = ((UserDetails) principal).getUsername();
         } else {
             email = principal.toString();
+        }
+        if (repo.existsByUserNameAndResumeName(email, resume_name)) {
+            throw new DuplicateResumeNameException(
+                "A resume with this name already exists for this user");
         }
         System.out.println(email);
         ResumeMetaData metaData=new ResumeMetaData();

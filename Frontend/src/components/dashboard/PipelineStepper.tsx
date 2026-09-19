@@ -15,7 +15,7 @@ interface PipelineStepperProps {
   onStepClick?: (step: PipelineStep) => void;
 }
 
-export function PipelineStepper({ currentStep }: PipelineStepperProps) {
+export function PipelineStepper({ currentStep, onStepClick }: PipelineStepperProps) {
   return (
     <div className="w-full overflow-x-auto">
       <div className="flex items-center justify-between min-w-[640px] px-2 py-4">
@@ -23,10 +23,16 @@ export function PipelineStepper({ currentStep }: PipelineStepperProps) {
           const stepNum = i as PipelineStep;
           const isComplete = stepNum < currentStep;
           const isCurrent = stepNum === currentStep;
+          const isNavigable = stepNum <= currentStep && stepNum !== 2;
           return (
             <div key={step.label} className="flex flex-1 items-center">
               {/* Step circle + label */}
-              <div className="flex flex-col items-center gap-2">
+              <button
+                type="button"
+                disabled={!isNavigable}
+                onClick={() => onStepClick?.(stepNum)}
+                className={`flex flex-col items-center gap-2 ${isNavigable ? 'cursor-pointer' : 'cursor-default'}`}
+              >
                 <div
                   className={`relative flex h-11 w-11 items-center justify-center rounded-xl border-2 transition-all duration-300 ${
                     isComplete
@@ -58,7 +64,7 @@ export function PipelineStepper({ currentStep }: PipelineStepperProps) {
                 >
                   {step.label}
                 </span>
-              </div>
+              </button>
 
               {/* Connector line */}
               {i < steps.length - 1 && (

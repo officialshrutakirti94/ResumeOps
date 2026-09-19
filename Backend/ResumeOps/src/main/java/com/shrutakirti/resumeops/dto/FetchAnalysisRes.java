@@ -10,6 +10,8 @@ import java.util.Map;
 @Getter
 @Setter
 public class FetchAnalysisRes {
+    private Long analysis_id;
+
     private String userName;
 
     private String resume_name;

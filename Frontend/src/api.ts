@@ -33,34 +33,65 @@ export interface ResumeSummary {
 }
 
 export interface AnalysisHistoryItem {
+  analysis_id?: number;
+  id?: number;
   userName: string;
   resume_name: string;
   version: string;
   analysis: Record<string, unknown>;
 }
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = localStorage.getItem('resumeops-token');
-  const headers = new Headers(options.headers);
+export interface ApiErrorDetails {
+  status?: number;
+  message: string;
+}
 
-  if (options.body && !(options.body instanceof FormData) && !headers.has('Content-Type')) {
+type RequestOptions = RequestInit & {
+  emptyOnNotFound?: boolean;
+};
+
+function publishApiError(details: ApiErrorDetails) {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent<ApiErrorDetails>('resumeops-api-error', { detail: details }));
+  }
+}
+
+async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const { emptyOnNotFound, ...fetchOptions } = options;
+  const token = localStorage.getItem('resumeops-token');
+  const headers = new Headers(fetchOptions.headers);
+
+  if (fetchOptions.body && !(fetchOptions.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
   if (token) headers.set('Authorization', `Bearer ${token}`);
 
-  const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
-  if (!response.ok) {
-    let message = `Request failed with status ${response.status}`;
-    try {
-      const body = await response.json();
-      message = body.message ?? body.error ?? message;
-    } catch {
-      // Keep the HTTP status when the server does not return JSON.
-    }
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, { ...fetchOptions, headers });
+  } catch {
+    const message = 'The server is unavailable. Please try again.';
+    publishApiError({ message });
     throw new Error(message);
   }
 
-  return response.json() as Promise<T>;
+  if (!response.ok) {
+    if (response.status === 404 && emptyOnNotFound) return [] as T;
+    let message = '';
+    try {
+      const body = await response.json();
+      message = body.message ?? body.error ?? '';
+    } catch {
+      // The centralized handler supplies the status-specific fallback.
+    }
+    const fallbackMessage = message || 'Something went wrong. Please try again.';
+    publishApiError({ status: response.status, message });
+    throw new Error(fallbackMessage);
+  }
+
+  if (response.status === 204) return undefined as T;
+  const body = await response.text();
+  return (body ? JSON.parse(body) : undefined) as T;
 }
 
 export function loginRequest(email: string, password: string) {
@@ -103,9 +134,17 @@ export function checkCompatibility(resumeId: number, jobDescription: string) {
 }
 
 export function getResumes() {
-  return request<ResumeSummary[]>('/getresumes');
+  return request<ResumeSummary[]>('/getresumes', { emptyOnNotFound: true });
 }
 
 export function getAnalysisHistory() {
-  return request<AnalysisHistoryItem[]>('/getAnalysisHistory');
+  return request<AnalysisHistoryItem[]>('/getAnalysisHistory', { emptyOnNotFound: true });
+}
+
+export function deleteAnalysis(analysisId: number) {
+  return request<void>(`/analysisDelete/${analysisId}`, { method: 'DELETE' });
+}
+
+export function deleteResume(resumeId: number) {
+  return request<void>(`/resumeDelete/${resumeId}`, { method: 'DELETE' });
 }

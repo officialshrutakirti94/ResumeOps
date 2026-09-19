@@ -21,9 +21,11 @@ interface ResultsPhaseProps {
   result: AnalysisResult;
   onOptimize?: () => void;
   onRestart: () => void;
+  onBackToJobDescription: () => void;
+  onBackToResume: () => void;
 }
 
-export function ResultsPhase({ result, onOptimize, onRestart }: ResultsPhaseProps) {
+export function ResultsPhase({ result, onOptimize, onRestart, onBackToJobDescription, onBackToResume }: ResultsPhaseProps) {
   const { analysis } = result;
   const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
 
@@ -259,6 +261,12 @@ export function ResultsPhase({ result, onOptimize, onRestart }: ResultsPhaseProp
             </div>
           </div>
           <div className="flex gap-3">
+            <Button variant="ghost" onClick={onBackToResume}>
+              Resume & History
+            </Button>
+            <Button variant="outline" onClick={onBackToJobDescription}>
+              Edit JD
+            </Button>
             <Button variant="outline" onClick={onRestart}>
               Start Over
             </Button>

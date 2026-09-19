@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { UploadCloud, FileText, X } from 'lucide-react';
+import { UploadCloud, FileText, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import type { ResumeSummary } from '@/api';
 
@@ -7,6 +7,7 @@ interface UploadPhaseProps {
   onResumeUploaded: (file: File, resumeName: string) => Promise<void>;
   onResumeRemoved: () => void;
   onResumeSelected: (resume: ResumeSummary) => void;
+  onResumeDeleted: (resume: ResumeSummary) => Promise<void>;
   resumes: ResumeSummary[];
   uploadedFilename?: string;
 }
@@ -15,6 +16,7 @@ export function UploadPhase({
   onResumeUploaded,
   onResumeRemoved,
   onResumeSelected,
+  onResumeDeleted,
   resumes,
   uploadedFilename,
 }: UploadPhaseProps) {
@@ -25,6 +27,17 @@ export function UploadPhase({
   const [uploading, setUploading] = useState(false);
   const [resumeName, setResumeName] = useState('');
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [deletingResumeId, setDeletingResumeId] = useState<number | null>(null);
+
+  const handleDeleteResume = async (resume: ResumeSummary) => {
+    if (!window.confirm(`Delete resume "${resume.resume_name}"?`)) return;
+    setDeletingResumeId(resume.resume_id);
+    try {
+      await onResumeDeleted(resume);
+    } finally {
+      setDeletingResumeId(null);
+    }
+  };
 
   const handleFile = (file: File) => {
     setError('');
@@ -69,18 +82,28 @@ export function UploadPhase({
           <h2 className="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Your resumes</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {resumes.map((resume) => (
-              <button
+              <div
                 key={resume.resume_id}
-                type="button"
-                onClick={() => onResumeSelected(resume)}
                 className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 text-left transition hover:border-brand-400 hover:shadow-sm dark:border-gray-700 dark:bg-gray-900"
               >
-                <FileText className="h-5 w-5 flex-shrink-0 text-brand-500" />
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold text-gray-900 dark:text-white">{resume.resume_name}</span>
-                  <span className="block truncate text-xs text-gray-500 dark:text-gray-400">Resume name</span>
-                </span>
-              </button>
+                <button type="button" onClick={() => onResumeSelected(resume)} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+                  <FileText className="h-5 w-5 flex-shrink-0 text-brand-500" />
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-semibold text-gray-900 dark:text-white">{resume.resume_name}</span>
+                    <span className="block truncate text-xs text-gray-500 dark:text-gray-400">Resume name</span>
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Delete ${resume.resume_name}`}
+                  title="Delete resume"
+                  disabled={deletingResumeId === resume.resume_id}
+                  onClick={() => void handleDeleteResume(resume)}
+                  className="rounded-lg p-2 text-gray-400 transition hover:bg-red-50 hover:text-red-600 disabled:cursor-wait disabled:opacity-50 dark:hover:bg-red-950/30"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
             ))}
           </div>
         </div>

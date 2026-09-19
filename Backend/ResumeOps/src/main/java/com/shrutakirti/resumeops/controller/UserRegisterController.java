@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api")
@@ -20,7 +21,7 @@ public class UserRegisterController {
     UserRegisterService userRegisterService;
 
     @PostMapping("/register")
-    public ResponseEntity<UserRegisterResponse> registerUser(@RequestBody UserEntity user){
+    public ResponseEntity<UserRegisterResponse> registerUser(@Valid @RequestBody UserEntity user){
         UserEntity savedUser=userRegisterService.registerService(user);
         UserRegisterResponse res=new UserRegisterResponse();
         res.setId(savedUser.getId());

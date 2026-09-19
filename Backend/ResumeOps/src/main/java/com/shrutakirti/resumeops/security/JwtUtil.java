@@ -15,10 +15,10 @@ import java.util.function.Function;
 public class JwtUtil {
 
     // A secure base64-encoded secret key of at least 256 bits.
-    @Value("${jwt.secret:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}")
+    @Value("${JWT_SECRET:${jwt.secret}}")
     private String secretKey;
 
-    @Value("${jwt.expiration:86400000}") // 1 day in milliseconds
+    @Value("${JWT_EXPIRATION:${jwt.expiration:86400000}}") // 1 day in milliseconds
     private long jwtExpiration;
 
     private SecretKey getSigningKey() {
