@@ -1,6 +1,6 @@
 import type { AnalysisResult } from '@/data/types';
 
-const API_BASE_URL = 'https://backendservice-wpxk.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, '') ?? '';
 
 export interface ApiUser {
   id: number;
@@ -60,6 +60,12 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   const token = localStorage.getItem('resumeops-token');
   const headers = new Headers(fetchOptions.headers);
 
+  if (!API_BASE_URL) {
+    const message = 'The API server URL is not configured for this deployment.';
+    publishApiError({ message });
+    throw new Error(message);
+  }
+
   if (fetchOptions.body && !(fetchOptions.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
@@ -97,6 +103,20 @@ export function loginRequest(email: string, password: string) {
   return request<LoginResponse>('/api/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
+  });
+}
+
+export function googleLoginRequest(credential: string) {
+  return request<LoginResponse>('/api/auth/google', {
+    method: 'POST',
+    body: JSON.stringify({ credential }),
+  });
+}
+
+export function linkGoogleAccount(credential: string) {
+  return request<void>('/api/auth/google/link', {
+    method: 'POST',
+    body: JSON.stringify({ credential }),
   });
 }
 

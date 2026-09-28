@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { getProfile, loginRequest, registerRequest, type ApiErrorDetails, type ApiUser } from '@/api';
+import { getProfile, googleLoginRequest, loginRequest, registerRequest, type ApiErrorDetails, type ApiUser } from '@/api';
 
 export interface User {
   id: number;
@@ -24,6 +24,7 @@ interface AuthContextValue {
   notify: (message: string, tone?: AppNotification['tone']) => void;
   dismissNotification: (id: number) => void;
   login: (email: string, password: string) => Promise<void>;
+  googleLogin: (credential: string) => Promise<void>;
   register: (username: string, email: string, password: string) => Promise<void>;
   refreshProfile: () => Promise<User>;
   logout: () => void;
@@ -128,6 +129,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (nextUser.credits === 2) notify('You have only 2 credits remaining.', 'warning');
   };
 
+  const googleLogin = async (credential: string) => {
+    const response = await googleLoginRequest(credential);
+    localStorage.setItem('resumeops-token', response.token);
+    const nextUser = saveUser(response);
+    if (nextUser.credits === 2) notify('You have only 2 credits remaining.', 'warning');
+  };
+
   const register = async (username: string, email: string, password: string) => {
     await registerRequest(username, email, password);
     await login(email, password);
@@ -149,6 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         notify,
         dismissNotification,
         login,
+        googleLogin,
         register,
         refreshProfile,
         logout,

@@ -1,20 +1,49 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Mail, Lock, ArrowLeft, ArrowRight, AlertCircle } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import { Button } from '@/components/ui/Button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
+import { mountGoogleButton } from '@/googleIdentity';
 
 interface LoginPageProps {
   onNavigate: (page: 'landing' | 'login' | 'register' | 'dashboard') => void;
 }
 
 export function LoginPage({ onNavigate }: LoginPageProps) {
-  const { login, notify } = useAuth();
+  const { login, googleLogin, notify } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const googleButtonRef = useRef<HTMLDivElement>(null);
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+  const handleGoogleCredential = useCallback(async (credential: string) => {
+    setError('');
+    setLoading(true);
+    try {
+      await googleLogin(credential);
+      notify('Login successful. Welcome back!');
+      onNavigate('dashboard');
+    } catch (loginError) {
+      setError(loginError instanceof Error ? loginError.message : 'Google login failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [googleLogin, notify, onNavigate]);
+  const googleCredentialHandlerRef = useRef(handleGoogleCredential);
+  googleCredentialHandlerRef.current = handleGoogleCredential;
+
+  useEffect(() => {
+    if (!googleClientId || !googleButtonRef.current) return;
+    return mountGoogleButton(
+      googleButtonRef.current,
+      googleClientId,
+      (credential) => googleCredentialHandlerRef.current(credential),
+      (loadError) => setError(loadError.message),
+    );
+  }, [googleClientId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,8 +57,8 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
       await login(email, password);
       notify('Login successful. Welcome back!');
       onNavigate('dashboard');
-    } catch {
-      setError('Login failed. Please try again.');
+    } catch (loginError) {
+      setError(loginError instanceof Error ? loginError.message : 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -111,6 +140,20 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
                   </>
                 )}
               </Button>
+
+              <div className="flex items-center gap-3 text-xs text-gray-400">
+                <span className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+                or continue with
+                <span className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
+              </div>
+
+              {googleClientId ? (
+                <div ref={googleButtonRef} className="flex min-h-10 justify-center" />
+              ) : (
+                <p className="text-center text-sm text-gray-500">
+                  Google sign-in is not configured for this environment.
+                </p>
+              )}
 
               <p className="text-center text-sm text-gray-600 dark:text-gray-400">
                 Don't have an account?{' '}

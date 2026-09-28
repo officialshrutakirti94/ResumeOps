@@ -1,6 +1,7 @@
 package com.shrutakirti.resumeops.service;
 
 import com.shrutakirti.resumeops.entity.UserEntity;
+import com.shrutakirti.resumeops.dto.UserRegisterRequest;
 import com.shrutakirti.resumeops.exception.UserAlreadyExistsException;
 import com.shrutakirti.resumeops.repository.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,13 +17,14 @@ public class UserRegisterService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    public UserEntity registerService(UserEntity user){
-        if(userRepo.existsByEmail(user.getEmail())){
+    public UserEntity registerService(UserRegisterRequest request){
+        if(userRepo.existsByEmail(request.getEmail())){
             throw new UserAlreadyExistsException("User is already registered");
         }
-        user.setName(user.getName());
-        user.setEmail(user.getEmail());
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        UserEntity user = new UserEntity();
+        user.setName(request.getName());
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         return userRepo.save(user);
     }
 }

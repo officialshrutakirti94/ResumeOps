@@ -25,7 +25,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
         return new User(
                 userEntity.getEmail(),
-                userEntity.getPassword(),
+                userEntity.getPassword() == null ? "" : userEntity.getPassword(),
                 Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + userEntity.getRole().name()))
         );
     }

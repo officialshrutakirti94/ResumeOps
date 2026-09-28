@@ -1,0 +1,9 @@
+# Google sign-in setup
+
+1. In Google Cloud Console, configure the OAuth consent screen and create an OAuth client ID with application type **Web application**. Add each frontend origin you use as an authorized JavaScript origin.
+2. Set `VITE_GOOGLE_CLIENT_ID` to that client ID and `VITE_API_BASE_URL` to the backend base URL in the frontend environment. For local development, copy `Frontend/.env.example` to `Frontend/.env.local` and set these values to your local client ID and backend URL.
+3. Set `GOOGLE_CLIENT_ID` to the same client ID in the backend environment. Set `CORS_ALLOWED_ORIGINS` to a comma-separated list of the exact frontend origins, without trailing slashes. Configure local and deployed origins only in the environment where they are used.
+4. Apply `Backend/ResumeOps/src/main/resources/db/manual/google-login.sql` to the PostgreSQL database before deploying. It allows passwordless Google users and adds a unique Google subject. The backend uses `ddl-auto=validate` and does not apply this SQL automatically.
+5. Configure all existing backend variables too (`DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `JWT_SECRET`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, and `FASTAPI_BASE_URL`). Keep `JWT_SECRET` unchanged from the value used to sign existing tokens. Deploy/restart the frontend and backend after setting their environment variables. Vite embeds `VITE_*` values at build time, so rebuild the frontend after changing them.
+
+The frontend sends Google's ID token to `POST /api/auth/google`. The backend verifies its signature, audience, issuer, expiry, and verified-email claim, then issues the normal ResumeOps JWT. If the verified Google email belongs to an existing password account, sign in with that password first and use **Link Google account** in the profile modal. Linking requires the Google email to match the signed-in ResumeOps account.

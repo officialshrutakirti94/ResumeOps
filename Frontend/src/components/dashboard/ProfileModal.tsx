@@ -1,5 +1,8 @@
-import { X, User, Mail, Zap, Shield } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { X, User, Mail, Zap, Shield, Link2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { linkGoogleAccount } from '@/api';
+import { mountGoogleButton } from '@/googleIdentity';
 
 interface ProfileModalProps {
   open: boolean;
@@ -7,7 +10,35 @@ interface ProfileModalProps {
 }
 
 export function ProfileModal({ open, onClose }: ProfileModalProps) {
-  const { user, logout } = useAuth();
+  const { user, logout, notify } = useAuth();
+  const [linkError, setLinkError] = useState('');
+  const [linking, setLinking] = useState(false);
+  const googleButtonRef = useRef<HTMLDivElement>(null);
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+  useEffect(() => {
+    if (!open || !googleClientId || !googleButtonRef.current) return;
+
+    return mountGoogleButton(
+      googleButtonRef.current,
+      googleClientId,
+      async (credential) => {
+        setLinkError('');
+        setLinking(true);
+        try {
+          await linkGoogleAccount(credential);
+          notify('Google account linked successfully.');
+        } catch (linkAccountError) {
+          setLinkError(linkAccountError instanceof Error
+            ? linkAccountError.message
+            : 'Could not link Google. Make sure you chose the Google account with this email.');
+        } finally {
+          setLinking(false);
+        }
+      },
+      (error) => setLinkError(error.message),
+    );
+  }, [googleClientId, notify, open]);
 
   if (!open) return null;
 
@@ -56,6 +87,24 @@ export function ProfileModal({ open, onClose }: ProfileModalProps) {
               <p className="text-xs font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">Username</p>
               <p className="text-sm font-semibold text-gray-900 dark:text-white">{user?.username ?? '—'}</p>
             </div>
+          </div>
+
+          <div className="rounded-xl border border-gray-100 px-4 py-4 dark:border-gray-800">
+            <div className="mb-3 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 dark:bg-brand-900/30">
+                <Link2 className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">Link Google account</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Sign in with Google using this email.</p>
+              </div>
+            </div>
+            {googleClientId ? (
+              <div ref={googleButtonRef} className={`flex min-h-10 justify-center ${linking ? 'pointer-events-none opacity-50' : ''}`} />
+            ) : (
+              <p className="text-sm text-gray-500">Google sign-in is not configured.</p>
+            )}
+            {linkError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{linkError}</p>}
           </div>
 
           {/* Email */}

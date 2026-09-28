@@ -1,6 +1,7 @@
 package com.shrutakirti.resumeops.controller;
 
 
+import com.shrutakirti.resumeops.dto.UserRegisterRequest;
 import com.shrutakirti.resumeops.dto.UserRegisterResponse;
 import com.shrutakirti.resumeops.entity.UserEntity;
 import com.shrutakirti.resumeops.service.UserRegisterService;
@@ -21,9 +22,9 @@ public class UserRegisterController {
     UserRegisterService userRegisterService;
 
     @PostMapping("/register")
-    public ResponseEntity<UserRegisterResponse> registerUser(@Valid @RequestBody UserEntity user){
-        UserEntity savedUser=userRegisterService.registerService(user);
-        UserRegisterResponse res=new UserRegisterResponse();
+    public ResponseEntity<UserRegisterResponse> registerUser(@Valid @RequestBody UserRegisterRequest request) {
+        UserEntity savedUser = userRegisterService.registerService(request);
+        UserRegisterResponse res = new UserRegisterResponse();
         res.setId(savedUser.getId());
         res.setName(savedUser.getName());
         res.setEmail(savedUser.getEmail());
