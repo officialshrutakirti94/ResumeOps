@@ -41,3 +41,10 @@ class ParsedResume(BaseModel):
     raw_tex: str
     normalized_content: str
     resume: Resume
+
+class ParsedPDFResume(BaseModel):
+    """
+    Wraps the extracted Resume model from a PDF file.
+    """
+    raw_text: str
+    resume: Resume

@@ -3,6 +3,7 @@ package com.shrutakirti.resumeops.service;
 import com.shrutakirti.resumeops.dto.ResumeUploadResponse;
 import com.shrutakirti.resumeops.entity.ResumeMetaData;
 import com.shrutakirti.resumeops.exception.DuplicateResumeNameException;
+import com.shrutakirti.resumeops.exception.InvalidResumeFileException;
 import com.shrutakirti.resumeops.repository.ResumeRepo;
 import com.shrutakirti.resumeops.repository.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalTime;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -37,9 +39,22 @@ public class UserResumeUpload {
             throw new DuplicateResumeNameException(
                 "A resume with this name already exists for this user");
         }
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null) {
+            throw new InvalidResumeFileException("Resume filename must end in .tex or .pdf");
+        }
+        String normalizedFilename = originalFilename.toLowerCase(Locale.ROOT);
+        String extension;
+        if (normalizedFilename.endsWith(".pdf")) {
+            extension = ".pdf";
+        } else if (normalizedFilename.endsWith(".tex")) {
+            extension = ".tex";
+        } else {
+            throw new InvalidResumeFileException("Only .tex and .pdf resumes are supported");
+        }
         System.out.println(email);
         ResumeMetaData metaData=new ResumeMetaData();
-        String file_name= UUID.randomUUID()+".tex";
+        String file_name= UUID.randomUUID()+extension;
 
         String url=email+"/"+file_name;
 

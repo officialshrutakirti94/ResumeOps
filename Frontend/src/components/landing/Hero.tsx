@@ -33,7 +33,7 @@ export function Hero({ onNavigate }: HeroProps) {
             </h1>
 
             <p className="mt-6 text-lg text-gray-600 dark:text-gray-400">
-              Upload your LaTeX resume, paste a job description, and let AI analyze and optimize
+              Upload a .tex or .pdf resume, paste a job description, and let AI analyze and optimize
               it for maximum ATS compatibility. No invented skills — just smarter wording,
               structure, and keyword alignment.
             </p>

@@ -1,7 +1,7 @@
 import { Wand2, FileEdit, AlignLeft, Target, CheckCircle2 } from 'lucide-react';
 
 const steps = [
-  { icon: FileEdit, text: 'Reading your LaTeX resume structure...' },
+  { icon: FileEdit, text: 'Reading your resume content...' },
   { icon: AlignLeft, text: 'Realigning keywords with job description...' },
   { icon: Target, text: 'Optimizing ATS compatibility...' },
   { icon: CheckCircle2, text: 'Finalizing optimized resume...' },

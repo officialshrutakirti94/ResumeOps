@@ -7,6 +7,7 @@ import com.shrutakirti.resumeops.entity.ResumeCompatibilityMetaData;
 import com.shrutakirti.resumeops.entity.ResumeMetaData;
 import com.shrutakirti.resumeops.entity.UserEntity;
 import com.shrutakirti.resumeops.exception.InsufficientCreditsException;
+import com.shrutakirti.resumeops.exception.InvalidResumeFileException;
 import com.shrutakirti.resumeops.exception.NoAnalysisException;
 import com.shrutakirti.resumeops.exception.AccessDeniesException;
 import com.shrutakirti.resumeops.exception.AnalysisServiceUnavailableException;
@@ -30,6 +31,7 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -117,11 +119,21 @@ public class ResumeCompatibilityService {
     }
 
     public Map<String,Object> analyzeResumeApiRequest(byte[] filebytes,String fileName,String jobDescription){
+        String normalizedFilename = fileName.toLowerCase(Locale.ROOT);
+        String endpoint;
+        if (normalizedFilename.endsWith(".pdf")) {
+            endpoint = "/resume/matchJD-withPDF";
+        } else if (normalizedFilename.endsWith(".tex")) {
+            endpoint = "/resume/matchJD";
+        } else {
+            throw new InvalidResumeFileException("Only .tex and .pdf resumes are supported");
+        }
+
         MultipartBodyBuilder builder=new MultipartBodyBuilder();
         builder.part("file",filebytes).filename(fileName).contentType(MediaType.APPLICATION_OCTET_STREAM);
         builder.part("jd", jobDescription);
         try {
-            return fastApiClient.post().uri("/resume/matchJD")
+            return fastApiClient.post().uri(endpoint)
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(BodyInserters.fromMultipartData(builder.build()))
                 .retrieve()

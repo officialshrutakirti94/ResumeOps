@@ -4,7 +4,7 @@ const steps = [
   {
     icon: Upload,
     title: 'Upload Resume',
-    description: 'Upload your existing .tex LaTeX resume file.',
+    description: 'Upload your existing .tex or .pdf resume file.',
   },
   {
     icon: ClipboardPaste,
@@ -41,7 +41,7 @@ export function HowItWorks() {
             From upload to optimized in 5 steps
           </h2>
           <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-            A clear, visual pipeline that takes your resume from raw LaTeX to ATS-ready.
+            A clear, visual pipeline that takes your resume from upload to ATS-ready insights.
           </p>
         </div>
 

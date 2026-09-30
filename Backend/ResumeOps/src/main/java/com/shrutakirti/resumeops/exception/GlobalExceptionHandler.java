@@ -35,6 +35,12 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.NOT_FOUND, exception.getMessage(), request);
     }
 
+    @ExceptionHandler(InvalidResumeFileException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidResumeFile(
+            InvalidResumeFileException exception, HttpServletRequest request) {
+        return error(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
+    }
+
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<ErrorResponse> handleUserAlreadyExists(
             UserAlreadyExistsException exception, HttpServletRequest request) {

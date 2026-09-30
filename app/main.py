@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from models import User, LLMResponse, ResumeMatchingScoreReq, ResumeMatchingScoreRes
-from models.resume import ParsedResume
+from models.resume import ParsedResume,ParsedPDFResume
 from models.JobDescription import (
     ComparisonResult,
     JobDescription,
@@ -17,6 +17,7 @@ from Services.latex_cleaning_service import LaTeXCleaningService
 from Services.resume_extraction_service import ResumeExtractionService
 from Services.JDParser import JDParser
 from Services.compareAnalysisService import CompareAnalysisService
+from Services.parse_pdf_resume import parse_pdf
 
 load_dotenv()
 
@@ -44,6 +45,39 @@ def health_check():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+@app.post("/resume/parsePDF", response_model=ParsedPDFResume)
+async def parse_pdf_resume(file: UploadFile = File(...)):
+    text_content = await parse_pdf(file)
+    resume_extraction_service = ResumeExtractionService()
+    response = await resume_extraction_service.extract_pdf_resume(raw_text=text_content)
+    return ParsedPDFResume(
+        raw_text=text_content,
+        resume=response
+    )
+
+@app.post("/resume/matchJD-withPDF",response_model=ComparisonResult)
+async def match_pdf_resume_with_jd(file: UploadFile=File(...),
+                                   jd:str=Form(...)):
+        try:
+            text_content=await parse_pdf(file)
+            resume_extraction_service = ResumeExtractionService()
+            response = await resume_extraction_service.extract_pdf_resume(raw_text=text_content)
+            parsed_jd= parsed_jd = await asyncio.to_thread(JDParser().parse, jd)
+            comparer_service=CompareAnalysisService()
+            return await comparer_service.compare_resume_with_jd(
+                jd=parsed_jd,
+                resume_content=ParsedPDFResume(
+                    raw_text=text_content,
+                    resume=response
+                    )
+            )
+        except Exception as error:
+            raise HTTPException(
+                status_code=503,
+                detail=f"Resume matching service failed: {error}"
+            )
+
 
 @app.post("/resume/matchJD", response_model=ComparisonResult)
 async def match_resume_with_jd(
@@ -121,6 +155,8 @@ async def parse_resume_file(file: UploadFile) -> ParsedResume:
         normalized_content=final_cleaned_text,  # Cleaned content for reference
         resume=resume
     )
+
+
 
 
 @app.post("/analyze_resume", response_model=LLMResponse)

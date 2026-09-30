@@ -4,8 +4,8 @@ import { Card } from '@/components/ui/Card';
 const features = [
   {
     icon: Upload,
-    title: 'LaTeX Resume Upload',
-    description: 'Upload your existing .tex resume directly. We preserve your LaTeX structure while optimizing content.',
+    title: 'Resume Upload',
+    description: 'Upload a .tex or .pdf resume for analysis and job-description matching.',
   },
   {
     icon: FileSearch,

@@ -37,11 +37,9 @@ public class SupabaseStorageService {
                 .uri(endpoint)
                 .header("apikey", serviceKey)
                 .header("Authorization", "Bearer " + serviceKey)
-                .contentType(
-                        MediaType.parseMediaType(
-                                file.getContentType()
-                        )
-                )
+                .contentType(file.getContentType() == null
+                        ? MediaType.APPLICATION_OCTET_STREAM
+                        : MediaType.parseMediaType(file.getContentType()))
                 .body(file.getBytes())
                 .retrieve()
                 .toBodilessEntity();

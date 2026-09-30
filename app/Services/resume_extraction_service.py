@@ -114,7 +114,7 @@ Extract and return ONLY valid JSON matching the schema above.
                 {"role": "user", "content": prompt},
               ],
               response_format={"type": "json_object"},
-              temperature=0.1,
+              temperature=0,
             )
 
             raw = response.choices[0].message.content
@@ -135,4 +135,86 @@ Extract and return ONLY valid JSON matching the schema above.
                 education=[],
                 certifications=[],
             )
+    async def extract_pdf_resume(self, raw_text: str) -> Resume:
+        """
+        Extract structured resume from raw PDF text content.
 
+        Args:
+            raw_text: Raw text extracted from PDF
+        """
+        prompt = f"""Extract resume information from the following clean text.
+
+INSTRUCTIONS:
+- Be conservative: only extract information explicitly present in the text
+- Do NOT invent, hallucinate, or assume information
+- Return empty values for missing information (not null)
+- Return None for optional fields like summary if not present
+
+RETURN SCHEMA (JSON):
+{{
+  "name": "Candidate name (string, or empty if missing)",
+  "role": "Current or target role (string, or empty if missing)",
+  "summary": "Brief professional summary (string or null)",
+  "skills": ["list", "of", "skills"],
+  "experience": [
+    {{
+      "company": "Company name",
+      "role": "Job title",
+      "duration": "Date range or duration",
+      "bullets": ["achievement 1", "achievement 2"]
+    }}
+  ],
+  "projects": [
+    {{
+      "name": "Project name",
+      "description": ["Description line 1"],
+      "technologies": ["tech1", "tech2"]
+    }}
+  ],
+  "education": [
+    {{
+      "institution": "University/School name",
+      "degree": "Degree name",
+      "duration": "Year(s)",
+      "details": ["Detail 1", "Detail 2"]
+    }}
+  ],
+  "certifications": ["Cert 1", "Cert 2"]
+}}
+
+TEXT TO ANALYZE:
+---
+{raw_text}
+---
+
+Extract and return ONLY valid JSON matching the schema above.
+"""
+        try:
+            response = await self.client.chat.completions.create(
+              model=self.model,
+              messages=[
+                {"role": "system", "content": "You are a helpful resume extraction assistant."},
+                {"role": "user", "content": prompt},
+              ],
+              response_format={"type": "json_object"},
+              temperature=0,
+            )
+
+            raw = response.choices[0].message.content
+            if not raw:
+              raise RuntimeError("Groq returned no parsed resume")
+            return Resume.model_validate_json(raw)
+        except Exception as e:
+            print(f"Error during LLM extraction: {e}")
+            # Return empty resume on error
+            return Resume(
+                name="",
+                role="",
+                summary=None,
+                skills=[],
+                experience=[],
+                projects=[],
+                education=[],
+                certifications=[],
+            )
+        

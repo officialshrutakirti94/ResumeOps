@@ -41,13 +41,13 @@ export function UploadPhase({
 
   const handleFile = (file: File) => {
     setError('');
-    if (!file.name.endsWith('.tex') && !file.name.endsWith('.txt')) {
-      setError('Please upload a .tex or .txt file');
+    if (!/\.(tex|pdf)$/i.test(file.name)) {
+      setError('Please upload a .tex or .pdf file');
       return;
     }
     setPendingFile(file);
     setFilename(file.name);
-    setResumeName(file.name.replace(/\.(tex|txt)$/i, ''));
+    setResumeName(file.name.replace(/\.(tex|pdf)$/i, ''));
   };
 
   const handleContinue = async () => {
@@ -110,9 +110,9 @@ export function UploadPhase({
       )}
 
       <div className="mb-6 text-center">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Upload Your LaTeX Resume</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Upload Your Resume</h2>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-          Upload your existing .tex resume file to get started
+          Upload your existing .tex or .pdf resume file to get started
         </p>
       </div>
 
@@ -130,7 +130,7 @@ export function UploadPhase({
         <input
           ref={fileInputRef}
           type="file"
-          accept=".tex,.txt"
+          accept=".tex,.pdf"
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];
@@ -170,10 +170,10 @@ export function UploadPhase({
             </div>
             <div>
               <p className="text-base font-medium text-gray-900 dark:text-white">
-                Drop your .tex file here, or click to browse
+                Drop your .tex or .pdf file here, or click to browse
               </p>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Supports .tex and .txt files up to 1MB
+                Supports .tex and .pdf files up to 1MB
               </p>
             </div>
           </div>
